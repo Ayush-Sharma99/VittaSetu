@@ -1,7 +1,7 @@
 # rag/knowledge_base.py
 import os
 import chromadb
-from backend.rag.gst_rules import load_rules
+from.rag.gst_rules import load_rules
 
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
 

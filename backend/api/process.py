@@ -2,9 +2,9 @@
 import uuid
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
-from backend.db.session import get_db
-from backend.db.models import Business
-from backend.agents.orchestrator import pipeline
+from.db.session import get_db
+from.db.models import Business
+from.agents.orchestrator import pipeline
 
 router = APIRouter(prefix="/api")
 

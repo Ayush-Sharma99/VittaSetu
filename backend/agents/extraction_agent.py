@@ -2,8 +2,8 @@
 import json
 import os
 import requests
-from backend.utils.prompt_templates import EXTRACTION_BANK_STATEMENT, EXTRACTION_INVOICE, EXTRACTION_GST_RETURN
-from backend.utils.pdf_utils import extract_text_from_pdf
+from.utils.prompt_templates import EXTRACTION_BANK_STATEMENT, EXTRACTION_INVOICE, EXTRACTION_GST_RETURN
+from.utils.pdf_utils import extract_text_from_pdf
 
 class ExtractionAgent:
     def __init__(self):
@@ -64,7 +64,7 @@ class ExtractionAgent:
         
         # High quality mocks mirroring seed data if the filename indicates Ravi Kumar's files
         if "bank_statement" in filename or "bank" in filename:
-            from backend.demo.seed_data import DEMO_BANK_TRANSACTIONS
+            from.demo.seed_data import DEMO_BANK_TRANSACTIONS
             return {
                 "account_holder": "Ravi Kumar Textiles",
                 "account_number_last4": "5432",
@@ -110,7 +110,7 @@ class ExtractionAgent:
             }
 
         elif "gst" in filename or "return" in filename:
-            from backend.demo.seed_data import DEMO_GST_RETURN
+            from.demo.seed_data import DEMO_GST_RETURN
             return DEMO_GST_RETURN
             
         else:

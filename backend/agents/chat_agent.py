@@ -2,7 +2,7 @@
 import os
 import json
 import requests
-from backend.utils.prompt_templates import CHAT_SYSTEM_PROMPT
+from.utils.prompt_templates import CHAT_SYSTEM_PROMPT
 
 class ChatAgent:
     def __init__(self):
