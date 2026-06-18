@@ -2,9 +2,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from.db.session import get_db
-from.db.models import Business, CreditScore, ComplianceFlag, Transaction, Invoice
-from.agents.chat_agent import ChatAgent
+from db.session import get_db
+from db.models import Business, CreditScore, ComplianceFlag, Transaction, Invoice
+from agents.chat_agent import ChatAgent
 
 router = APIRouter(prefix="/api")
 chat_agent = ChatAgent()

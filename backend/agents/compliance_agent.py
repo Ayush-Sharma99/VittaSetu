@@ -2,8 +2,8 @@
 import os
 import json
 import requests
-from.utils.prompt_templates import COMPLIANCE_AUDITOR
-from.rag.knowledge_base import kb
+from utils.prompt_templates import COMPLIANCE_AUDITOR
+from rag.knowledge_base import kb
 
 class ComplianceAgent:
     def __init__(self):

@@ -2,8 +2,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from.db.session import init_db
-from.api import upload, process, status, score, chat, demo, compliance, reconciliation
+from db.session import init_db
+from api import upload, process, status, score, chat, demo, compliance, reconciliation
 
 # Initialize SQLite database schema
 init_db()

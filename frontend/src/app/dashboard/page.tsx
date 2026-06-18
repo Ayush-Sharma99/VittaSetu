@@ -37,7 +37,7 @@ export default function DashboardPage() {
       .then((data) => {
         setCreditPassport(data);
         
-        // Fetch raw lists for child tabs from backend endpoints or mock
+        // Fetch raw lists for child tabs from endpoints or mock
         // Since we are showing invoices and transactions, retrieve from business context
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         

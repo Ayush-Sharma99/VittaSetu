@@ -2,8 +2,8 @@
 import os
 import json
 import requests
-from.scoring.credit_model import compute_credit_score
-from.utils.prompt_templates import CREDIT_SCORING_EXPLANATION
+from scoring.credit_model import compute_credit_score
+from utils.prompt_templates import CREDIT_SCORING_EXPLANATION
 
 class ScoringAgent:
     def __init__(self):

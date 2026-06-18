@@ -1,8 +1,8 @@
 # api/score.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from.db.session import get_db
-from.db.models import CreditScore, ComplianceFlag, Business
+from db.session import get_db
+from db.models import CreditScore, ComplianceFlag, Business
 
 router = APIRouter(prefix="/api")
 

@@ -2,7 +2,7 @@
 import os
 import json
 import requests
-from.utils.prompt_templates import RECONCILIATION_FUZZY
+from utils.prompt_templates import RECONCILIATION_FUZZY
 
 class ReconciliationAgent:
     def __init__(self):

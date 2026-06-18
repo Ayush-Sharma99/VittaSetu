@@ -2,10 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
-from.db.session import get_db
-from.db.models import Business, Document, Transaction, Invoice, ComplianceFlag, CreditScore, AgentTraceLog
-from.demo.seed_data import DEMO_BUSINESS, DEMO_BANK_TRANSACTIONS, DEMO_INVOICES, DEMO_GST_RETURN
-from.agents.orchestrator import pipeline
+from db.session import get_db
+from db.models import Business, Document, Transaction, Invoice, ComplianceFlag, CreditScore, AgentTraceLog
+from demo.seed_data import DEMO_BUSINESS, DEMO_BANK_TRANSACTIONS, DEMO_INVOICES, DEMO_GST_RETURN
+from agents.orchestrator import pipeline
 
 router = APIRouter(prefix="/api/demo")
 

@@ -4,8 +4,8 @@ import shutil
 import uuid
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
-from.db.session import get_db
-from.db.models import Document, Business
+from db.session import get_db
+from db.models import Document, Business
 
 router = APIRouter(prefix="/api")
 

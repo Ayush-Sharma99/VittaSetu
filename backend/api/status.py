@@ -4,8 +4,8 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from.db.session import get_db
-from.db.models import AgentTraceLog
+from db.session import get_db
+from db.models import AgentTraceLog
 
 router = APIRouter(prefix="/api")
 
@@ -24,7 +24,7 @@ async def get_job_status(job_id: str, db: Session = Depends(get_db)):
         while not completed and retry_count < 300:
             # Re-fetch logs inside loop to pick up background process updates
             # Create a localized session for async usage
-            from.db.session import SessionLocal
+            from db.session import SessionLocal
             loop_db = SessionLocal()
             try:
                 logs = loop_db.query(AgentTraceLog).filter(
