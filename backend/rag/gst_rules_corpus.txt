@@ -1,0 +1,15 @@
+Rule 47 — Tax Invoice Time Limit: "A registered person must issue a tax invoice before or at the time of removal of goods for supply, or before or after the provision of service but within 30 days of supply. For banking/insurance companies, the limit is 45 days."
+---RULE---
+E-invoicing Threshold: "As of August 2023, e-invoicing is mandatory for all registered businesses with aggregate turnover exceeding ₹5 crore in any financial year from 2017-18 onwards."
+---RULE---
+GSTR-1 Filing Deadline: "GSTR-1 must be filed by the 11th of the following month for monthly filers. Quarterly filers must file by the 13th of the month following the quarter end."
+---RULE---
+GSTR-3B Filing Deadline: "GSTR-3B is due by the 20th of the following month for taxpayers with aggregate turnover above ₹5 crore. For others, due date varies by state (22nd or 24th)."
+---RULE---
+HSN Code Requirements: "For B2B invoices with taxable value exceeding ₹50,000, HSN code must be mentioned. For turnover above ₹5 crore, 6-digit HSN is mandatory."
+---RULE---
+ITC Eligibility — Section 16: "Input Tax Credit can be claimed only if: (a) the taxpayer holds a tax invoice, (b) the goods or services have been received, (c) the supplier has paid the tax to the government, and (d) the taxpayer has filed the return."
+---RULE---
+Late Filing Penalty: "Late fee for GSTR-1 and GSTR-3B is ₹50 per day of delay (₹25 CGST + ₹25 SGST), capped at ₹10,000. For nil returns, the late fee is ₹20 per day."
+---RULE---
+Reverse Charge Mechanism: "Under Section 9(3) and 9(4) of CGST Act, GST is payable by the recipient on notified supplies. Common RCM categories include services from advocates, goods transport agencies, and imports."
