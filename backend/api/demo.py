@@ -46,13 +46,18 @@ def reset_demo(db: Session = Depends(get_db)):
         {"filename": "gst_return_ravi.pdf", "doc_type": "gst_return"}
     ]
 
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(current_dir)
+
     created_docs = []
     for d in docs_to_create:
+        resolved_path = os.path.join(backend_dir, "demo", "synthetic_docs", d["filename"])
         doc = Document(
             business_id=business.id,
             doc_type=d["doc_type"],
             filename=d["filename"],
-            file_path=f"./backend/demo/synthetic_docs/{d['filename']}",
+            file_path=resolved_path,
             extraction_status="pending"
         )
         db.add(doc)
