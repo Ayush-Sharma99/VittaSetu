@@ -28,9 +28,13 @@ class ExtractionAgent:
         else:
             raise ValueError(f"Unknown document type: {doc_type}")
 
-        # If Gemini API Key is missing or invalid, generate high-quality fallback responses matching seed data
         if not self.api_key or self.api_key == "your_gemini_api_key":
             reason = "GOOGLE_API_KEY unset" if not self.api_key else "GOOGLE_API_KEY is placeholder"
+            return {"data": self._fallback_extraction(doc_type, file_path, text_content=text_content), "fallback_used": True, "fallback_reason": reason}
+
+        # Fallback if document text is empty (e.g. 0-byte placeholder files in demo mode)
+        if not text_content or not text_content.strip():
+            reason = "Document contains no extractable text (empty PDF/placeholder)"
             return {"data": self._fallback_extraction(doc_type, file_path, text_content=text_content), "fallback_used": True, "fallback_reason": reason}
 
         model_name = "gemini-3.1-flash-lite"
