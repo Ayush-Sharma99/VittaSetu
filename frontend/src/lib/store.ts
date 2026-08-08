@@ -4,7 +4,7 @@ import { create } from 'zustand';
 export interface AgentStep {
   agent: string;
   step: number;
-  status: 'running' | 'done' | 'error';
+  status: 'running' | 'done' | 'error' | 'fallback_used';
   message: string;
   reasoning?: string;
   duration?: string;
@@ -12,8 +12,16 @@ export interface AgentStep {
 
 export interface CreditPassport {
   business_id: string;
+  business_name?: string;
+  gstin?: string;
   score: number;
   grade: string;
+  using_fallback?: boolean;
+  demo_mode?: boolean;
+  filing_rate?: number;
+  reconciliation_rate?: number;
+  on_time_rate?: number;
+  avg_monthly_revenue?: number;
   computed_at: string;
   factor_breakdown: {
     filing_compliance: number;

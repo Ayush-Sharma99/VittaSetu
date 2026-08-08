@@ -7,6 +7,8 @@ from rag.knowledge_base import kb
 
 class ComplianceAgent:
     def __init__(self):
+        from dotenv import load_dotenv
+        load_dotenv()
         self.api_key = os.getenv("GOOGLE_API_KEY")
 
     def run(self, business_data: dict) -> list:
@@ -23,39 +25,86 @@ class ComplianceAgent:
 
         # Fallback if Google API Key is not set or fails
         if not self.api_key or self.api_key == "your_gemini_api_key":
-            return self._fallback_compliance(business_data)
+            reason = "GOOGLE_API_KEY unset" if not self.api_key else "GOOGLE_API_KEY is placeholder"
+            return {"data": self._fallback_compliance(business_data), "fallback_used": True, "fallback_reason": reason}
 
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
-            headers = {"Content-Type": "application/json"}
-            
-            prompt = COMPLIANCE_AUDITOR.format(
-                rag_context=rag_context,
-                financial_data_json=financial_data_json
-            )
-            
-            payload = {
-                "contents": [
-                    {
-                        "parts": [{"text": prompt}]
-                    }
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json"
+        model_name = "gemini-3.1-flash-lite"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        
+        prompt = COMPLIANCE_AUDITOR.format(
+            rag_context=rag_context,
+            financial_data_json=financial_data_json
+        )
+        
+        payload = {
+            "contents": [
+                {
+                    "parts": [{"text": prompt}]
                 }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json"
             }
-            
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            if response.status_code == 200:
+        }
+        
+        import time
+        max_retries = 3
+        retry_attempts = 0
+        start_time = time.time()
+        response = None
+        error_msg = ""
+        http_status = None
+        response_body = ""
+
+        for attempt in range(max_retries):
+            retry_attempts = attempt
+            try:
+                latency_start = time.time()
+                response = requests.post(url, headers=headers, json=payload, timeout=30)
+                latency_end = time.time()
+                http_status = response.status_code
+                response_body = response.text
+                
+                print(f"[LLM LOG] Agent: Compliance, Model: {model_name}, Attempt: {attempt + 1}, HTTP Status: {http_status}, Latency: {latency_end - latency_start:.2f}s")
+                
+                if http_status == 200:
+                    break
+                elif http_status == 429:
+                    error_msg = f"Gemini API returned 429: Quota exceeded"
+                elif http_status == 404:
+                    error_msg = f"Gemini API returned 404: Model not found ({model_name})"
+                elif http_status == 401 or http_status == 403:
+                    error_msg = f"Gemini API returned {http_status}: Authentication failure"
+                else:
+                    error_msg = f"Gemini API returned HTTP {http_status}: {response_body[:200]}"
+                
+                time.sleep(1)
+            except requests.exceptions.Timeout as t_err:
+                error_msg = f"Timeout error calling Gemini API: {t_err}"
+                print(f"[LLM LOG] Agent: Compliance, Attempt: {attempt + 1}, Timeout Error: {t_err}")
+                time.sleep(1)
+            except Exception as e:
+                error_msg = f"Request failed: {str(e)}"
+                print(f"[LLM LOG] Agent: Compliance, Attempt: {attempt + 1}, Error: {e}")
+                time.sleep(1)
+
+        total_latency = time.time() - start_time
+        print(f"[LLM LOG SUMMARY] Agent: Compliance, Model: {model_name}, Total Attempts: {retry_attempts + 1}, Final HTTP Status: {http_status}, Total Latency: {total_latency:.2f}s, Error Body: {response_body if http_status != 200 else 'None'}")
+
+        if response is not None and http_status == 200:
+            try:
                 result_json = response.json()
                 text_response = result_json["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(text_response)
-            else:
-                print(f"Compliance Agent API returned error: {response.text}")
-                return self._fallback_compliance(business_data)
-        except Exception as e:
-            print(f"Compliance Agent failed: {e}. Falling back to default compliance flags.")
-            return self._fallback_compliance(business_data)
+                parsed_json = json.loads(text_response)
+                return {"data": parsed_json, "fallback_used": False, "fallback_reason": ""}
+            except Exception as parse_err:
+                reason = f"JSON parse failure on LLM output: {parse_err}"
+                print(f"[LLM ERROR] {reason}")
+                return {"data": self._fallback_compliance(business_data), "fallback_used": True, "fallback_reason": reason}
+        else:
+            final_reason = error_msg or "Failed to call Gemini API after retries"
+            return {"data": self._fallback_compliance(business_data), "fallback_used": True, "fallback_reason": final_reason}
 
     def _fallback_compliance(self, business_data: dict) -> list:
         flags = []

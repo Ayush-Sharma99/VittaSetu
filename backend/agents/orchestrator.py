@@ -44,7 +44,10 @@ class PipelineOrchestrator:
                 
                 try:
                     # Run extraction agent
-                    parsed_json = self.extraction_agent.run(doc.file_path, doc.doc_type)
+                    agent_res = self.extraction_agent.run(doc.file_path, doc.doc_type)
+                    parsed_json = agent_res["data"]
+                    if agent_res["fallback_used"]:
+                        self._log_trace(db, business_id, job_id, "extraction", "1", f"Fallback used for {doc.filename}: {agent_res['fallback_reason']}", "fallback_used")
                     doc.extracted_json = parsed_json
                     doc.extraction_status = "done"
                     db.commit()
@@ -137,7 +140,10 @@ class PipelineOrchestrator:
                 ]
             }
             
-            flags = self.compliance_agent.run(audit_data)
+            agent_res = self.compliance_agent.run(audit_data)
+            flags = agent_res["data"]
+            if agent_res["fallback_used"]:
+                self._log_trace(db, business_id, job_id, "compliance", "2", f"Fallback used: {agent_res['fallback_reason']}", "fallback_used")
             
             # Save flags to DB
             # Clear old compliance flags
@@ -170,7 +176,10 @@ class PipelineOrchestrator:
             invoice_list = [{"id": inv.id, "amount": inv.amount, "invoice_date": inv.invoice_date, "invoice_number": inv.invoice_number} for inv in db_invoices]
             txn_list = [{"id": tx.id, "amount": tx.amount, "txn_date": tx.txn_date, "description": tx.description} for tx in db_transactions]
             
-            matches = self.reconciliation_agent.run(invoice_list, txn_list)
+            agent_res = self.reconciliation_agent.run(invoice_list, txn_list)
+            matches = agent_res["data"]
+            if agent_res["fallback_used"]:
+                self._log_trace(db, business_id, job_id, "reconciliation", "3", f"Fallback used: {agent_res['fallback_reason']}", "fallback_used")
             
             # Apply matches
             matched_count = 0
@@ -214,7 +223,10 @@ class PipelineOrchestrator:
             }
             
             db_flags = db.query(ComplianceFlag).filter(ComplianceFlag.business_id == business_id).all()
-            score_data = self.scoring_agent.run(metrics, db_flags)
+            agent_res = self.scoring_agent.run(metrics, db_flags)
+            score_data = agent_res["data"]
+            if agent_res["fallback_used"]:
+                self._log_trace(db, business_id, job_id, "scoring", "4", f"Fallback used: {agent_res['fallback_reason']}", "fallback_used")
             
             # Write score
             db.query(CreditScore).filter(CreditScore.business_id == business_id).delete()

@@ -23,6 +23,7 @@ export default function DashboardPage() {
 
   // Fallback structures if database fields are empty during direct navigation checks
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoicesError, setInvoicesError] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -37,22 +38,22 @@ export default function DashboardPage() {
       .then((data) => {
         setCreditPassport(data);
         
-        // Fetch raw lists for child tabs from endpoints or mock
-        // Since we are showing invoices and transactions, retrieve from business context
+        // Fetch raw lists for child tabs from endpoints
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
         
         fetch(`${API_BASE_URL}/api/reconciliation/${businessId}`)
-          .then(res => res.json())
-          .then(invs => setInvoices(invs))
-          .catch(() => {
-            // High quality fallback mocks matching seed data for Ravi Kumar
-            setInvoices([
-              { id: '1', invoice_number: 'RKT/2026/001', invoice_date: '2026-01-05', vendor_or_customer: 'Mehta Fabrics', amount: 185000, gst_amount: 33300, gst_rate: 18, reconciled: true },
-              { id: '2', invoice_number: 'RKT/2026/002', invoice_date: '2026-01-10', vendor_or_customer: 'Yarn Supplier Ahmedabad', amount: 120000, gst_amount: 21600, reconciled: true },
-              { id: '22', invoice_number: 'RKT/2026/022', invoice_date: '2026-03-20', vendor_or_customer: 'Patel Garments', amount: 95000, gst_amount: 17100, reconciled: false },
-              { id: '23', invoice_number: 'RKT/2026/023', invoice_date: '2026-03-22', vendor_or_customer: 'Raj Fabrics', amount: 45000, gst_amount: 8100, reconciled: false },
-              { id: '24', invoice_number: 'RKT/2026/024', invoice_date: '2026-03-24', vendor_or_customer: 'Karan Suits', amount: 65000, gst_amount: 11700, reconciled: false },
-            ]);
+          .then(res => {
+            if (!res.ok) throw new Error('Failed to fetch invoices');
+            return res.json();
+          })
+          .then(invs => {
+            setInvoices(invs);
+            setInvoicesError(false);
+          })
+          .catch((err) => {
+            console.error(err);
+            setInvoices([]);
+            setInvoicesError(true);
           });
 
         fetch(`${API_BASE_URL}/api/compliance/${businessId}`)
@@ -86,6 +87,18 @@ export default function DashboardPage() {
     );
   }
 
+  const formatRevenue = (rev?: number) => {
+    if (rev === undefined) return 'N/A';
+    if (rev >= 100000) {
+      return `₹${(rev / 100000).toFixed(1)}L`;
+    }
+    return `₹${rev.toLocaleString('en-IN')}`;
+  };
+
+  const warningFlagsCount = creditPassport.compliance_flags.filter(f => f.severity === 'warning').length;
+  const criticalFlagsCount = creditPassport.compliance_flags.filter(f => f.severity === 'critical').length;
+  const reconciledInvoicesCount = invoices.filter(i => i.reconciled).length;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fadeIn relative">
       
@@ -95,11 +108,23 @@ export default function DashboardPage() {
           <CardContent className="p-6 space-y-6">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-emerald-950 flex items-center justify-center text-lg font-bold text-slate-100 border border-emerald-500/20">
-                RK
+                {creditPassport.business_name ? creditPassport.business_name.substring(0, 2).toUpperCase() : 'RK'}
               </div>
               <div>
-                <h3 className="font-bold text-[#F1F5F9] text-base">Ravi Kumar Textiles</h3>
-                <span className="text-xs text-[#94A3B8] font-mono">GSTIN: {creditPassport.compliance_flags[0]?.gstin || '27AABCU9603R1ZM'}</span>
+                <h3 className="font-bold text-[#F1F5F9] text-base flex flex-wrap gap-1.5 items-center">
+                  {creditPassport.business_name || 'Ravi Kumar Textiles'}
+                  {creditPassport.using_fallback && (
+                    <span className="text-[10px] text-amber-400 font-bold bg-amber-950/40 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                      Fallback Active
+                    </span>
+                  )}
+                  {creditPassport.demo_mode && (
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/40 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                      Demo Mode
+                    </span>
+                  )}
+                </h3>
+                <span className="text-xs text-[#94A3B8] font-mono">GSTIN: {creditPassport.gstin || '27AABCU9603R1ZM'}</span>
               </div>
             </div>
 
@@ -134,7 +159,7 @@ export default function DashboardPage() {
               >
                 <span>Invoice Matching</span>
                 <span className="bg-slate-800 border border-[#334155] text-slate-300 px-2 py-0.5 rounded text-xs">
-                  24 total
+                  {invoices.length} total
                 </span>
               </button>
             </div>
@@ -162,7 +187,9 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="p-4 flex flex-col space-y-1">
                   <span className="text-xs text-[#94A3B8] font-medium">Filing Rate</span>
-                  <span className="text-xl font-extrabold text-[#F1F5F9]">92%</span>
+                  <span className="text-xl font-extrabold text-[#F1F5F9]">
+                    {creditPassport.filing_rate !== undefined ? `${Math.round(creditPassport.filing_rate * 100)}%` : 'N/A'}
+                  </span>
                   <span className="text-[10px] text-[#22C55E] font-medium">&uarr; Stable</span>
                 </CardContent>
               </Card>
@@ -170,24 +197,28 @@ export default function DashboardPage() {
               <Card>
                 <CardContent className="p-4 flex flex-col space-y-1">
                   <span className="text-xs text-[#94A3B8] font-medium">Reconciled</span>
-                  <span className="text-xl font-extrabold text-[#F1F5F9]">87.5%</span>
-                  <span className="text-[10px] text-slate-500">21 / 24 match</span>
+                  <span className="text-xl font-extrabold text-[#F1F5F9]">
+                    {creditPassport.reconciliation_rate !== undefined ? `${Math.round(creditPassport.reconciliation_rate * 100)}%` : 'N/A'}
+                  </span>
+                  <span className="text-[10px] text-slate-500">{reconciledInvoicesCount} / {invoices.length} match</span>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="p-4 flex flex-col space-y-1">
                   <span className="text-xs text-[#94A3B8] font-medium">Flags</span>
-                  <span className="text-xl font-extrabold text-[#F59E0B]">2 Warning</span>
-                  <span className="text-[10px] text-slate-500">0 Critical</span>
+                  <span className="text-xl font-extrabold text-[#F59E0B]">{warningFlagsCount} Warning</span>
+                  <span className="text-[10px] text-slate-500">{criticalFlagsCount} Critical</span>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="p-4 flex flex-col space-y-1">
                   <span className="text-xs text-[#94A3B8] font-medium">Monthly Rev</span>
-                  <span className="text-xl font-extrabold text-[#F1F5F9]">₹18.4L</span>
-                  <span className="text-[10px] text-[#22C55E] font-medium">&uarr; +4.2%</span>
+                  <span className="text-xl font-extrabold text-[#F1F5F9]">
+                    {formatRevenue(creditPassport.avg_monthly_revenue)}
+                  </span>
+                  <span className="text-[10px] text-[#22C55E] font-medium">&uarr; Active</span>
                 </CardContent>
               </Card>
             </div>
@@ -199,6 +230,7 @@ export default function DashboardPage() {
               explanation={creditPassport.explanation}
               topStrength={creditPassport.top_strength}
               topAction={creditPassport.top_action}
+              usingFallback={creditPassport.using_fallback}
             />
           </div>
         )}
@@ -213,7 +245,13 @@ export default function DashboardPage() {
         {activeTab === 'invoices' && (
           <div className="space-y-4 animate-fadeIn">
             <h2 className="text-xl font-bold text-[#F1F5F9]">Invoice reconciliation ledger</h2>
-            <ReconciliationTable invoices={invoices} />
+            {invoicesError ? (
+              <div className="p-6 bg-red-950/30 border border-red-500/20 text-red-400 rounded-xl text-center text-sm font-semibold">
+                Error loading invoices ledger. Please try again.
+              </div>
+            ) : (
+              <ReconciliationTable invoices={invoices} />
+            )}
           </div>
         )}
       </div>
@@ -249,6 +287,9 @@ export default function DashboardPage() {
                     <Button onClick={() => { setShowULIModal(false); router.push('/chat'); }} className="flex-1 text-xs justify-center font-bold">
                       Chat with Advisor
                     </Button>
+                  </div>
+                  <div className="text-[10px] text-slate-500 italic mt-4 text-center">
+                    Simulated for demo — not a live lender connection
                   </div>
                 </div>
               )}

@@ -12,6 +12,32 @@ router = APIRouter(prefix="/api")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploaded_docs")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+@router.post("/business")
+def create_business(
+    name: str = Form(...),
+    gstin: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    if not email:
+        email = f"info@{name.lower().replace(' ', '')}-{uuid.uuid4().hex[:6]}.com"
+    business = Business(
+        name=name,
+        gstin=gstin,
+        email=email,
+        phone=phone,
+        demo_mode=False
+    )
+    db.add(business)
+    db.commit()
+    db.refresh(business)
+    return {
+        "status": "success",
+        "business_id": business.id,
+        "name": business.name
+    }
+
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),

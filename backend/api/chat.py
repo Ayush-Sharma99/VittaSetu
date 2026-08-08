@@ -44,4 +44,26 @@ def chat_with_advisor(req: ChatRequest, db: Session = Depends(get_db)):
     }
 
     response = chat_agent.run(req.message, business_context)
+    
+    # Log trace log for Chat Agent
+    from db.models import AgentTraceLog
+    import uuid
+    
+    status_str = "fallback_used" if response.get("fallback_used") else "done"
+    reasoning_str = response.get("fallback_reason", "") if response.get("fallback_used") else "Chat message responded successfully."
+    
+    trace = AgentTraceLog(
+        business_id=req.business_id,
+        job_id=str(uuid.uuid4()), # Generate a trace job ID for chat session log
+        agent_name="chat",
+        step_number="1",
+        input_summary=req.message[:200],
+        output_summary=response["reply"][:200],
+        reasoning=reasoning_str,
+        status=status_str,
+        duration_ms="0"
+    )
+    db.add(trace)
+    db.commit()
+    
     return response

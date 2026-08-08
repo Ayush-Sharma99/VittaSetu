@@ -42,7 +42,7 @@ export default function Home() {
           </h1>
           
           <p className="text-sm sm:text-base text-[#94A3B8] font-medium leading-relaxed">
-            AI-powered compliance and credit readiness for India's 63 million MSMEs. Convert raw document streams (GST invoices, bank statements, ledgers) into verified, lender-grade credit passports.
+            AI-powered compliance and credit readiness for India&apos;s 63 million MSMEs. Convert raw document streams (GST invoices, bank statements, ledgers) into verified, lender-grade credit passports.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row gap-4">

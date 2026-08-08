@@ -114,7 +114,7 @@ export default function ComplianceStatus({ flags }: { flags: ComplianceFlag[] })
                   <div className="p-4 bg-slate-900 border-t border-[#334155] font-mono text-xs text-[#94A3B8] space-y-2">
                     <div className="text-[#22C55E] font-semibold">Retrieved GST rule text (RAG source):</div>
                     <blockquote className="border-l-2 border-[#22C55E] pl-3 py-1 italic leading-relaxed text-slate-300">
-                      "{flag.rag_source_chunk}"
+                      &quot;{flag.rag_source_chunk}&quot;
                     </blockquote>
                     <div className="text-[10px] text-slate-500 text-right mt-1">
                       Detected at: {new Date(flag.detected_at).toLocaleString()}

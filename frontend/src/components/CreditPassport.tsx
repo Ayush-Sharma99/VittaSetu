@@ -18,6 +18,7 @@ interface CreditPassportProps {
   explanation: string;
   topStrength: string;
   topAction: string;
+  usingFallback?: boolean;
 }
 
 export default function CreditPassport({
@@ -26,7 +27,8 @@ export default function CreditPassport({
   factorBreakdown,
   explanation,
   topStrength,
-  topAction
+  topAction,
+  usingFallback
 }: CreditPassportProps) {
   // Determine score color matching parameters (green >= 70, amber 50-69, red < 50)
   const getScoreColorClass = (val: number) => {
@@ -62,7 +64,13 @@ export default function CreditPassport({
   return (
     <div className="space-y-6">
       {/* Visual circular gauge and grade display card */}
-      <Card className="overflow-hidden">
+      <Card className={`overflow-hidden ${usingFallback ? 'border-amber-500/30' : ''}`}>
+        {usingFallback && (
+          <div className="bg-amber-950/60 border-b border-[#F59E0B]/20 text-[#F59E0B] px-4 py-2.5 text-xs font-mono flex items-center gap-2">
+            <span className="animate-pulse">⚠️</span>
+            <span><strong>System Notice:</strong> This credit passport is constructed using static fallback/mock data because one or more backend agents had to bypass LLM generation.</span>
+          </div>
+        )}
         <CardContent className="p-8 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col items-center space-y-4">
             {/* Simple SVG Circular Score Indicator */}

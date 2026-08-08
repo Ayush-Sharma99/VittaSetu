@@ -33,6 +33,27 @@ function UploadPageContent() {
         })
         .catch((e) => console.error(e))
         .finally(() => setLoading(false));
+    } else {
+      setDemoMode(false);
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("name", "Aditya Enterprises");
+      formData.append("gstin", "27AEPA1234F1Z0");
+      
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      fetch(`${API_BASE_URL}/api/business`, {
+        method: "POST",
+        body: formData
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to register business");
+          return res.json();
+        })
+        .then((data) => {
+          setBusinessId(data.business_id);
+        })
+        .catch((e) => console.error("Failed to register custom business:", e))
+        .finally(() => setLoading(false));
     }
   }, [isDemo]);
 
@@ -80,7 +101,7 @@ function UploadPageContent() {
           <CardContent className="p-4 flex items-start gap-3 text-xs sm:text-sm text-[#22C55E]">
             <AlertCircle className="shrink-0 mt-0.5" size={18} />
             <div>
-              <span className="font-bold">Demo mode active</span> &mdash; using Ravi Kumar's sample documents (1 Bank Statement, 2 Invoices, 1 GST Return). Click 'Start Analysis' to proceed.
+              <span className="font-bold">Demo mode active</span> &mdash; using Ravi Kumar&apos;s sample documents (1 Bank Statement, 2 Invoices, 1 GST Return). Click &apos;Start Analysis&apos; to proceed.
             </div>
           </CardContent>
         </Card>

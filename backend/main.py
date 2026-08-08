@@ -1,9 +1,12 @@
 # main.py
 import os
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from db.session import init_db
-from api import upload, process, status, score, chat, demo, compliance, reconciliation
+from api import upload, process, status, score, chat, demo, compliance, reconciliation, health
 
 # Initialize SQLite database schema
 init_db()
@@ -35,6 +38,7 @@ app.include_router(chat.router)
 app.include_router(demo.router)
 app.include_router(compliance.router)
 app.include_router(reconciliation.router)
+app.include_router(health.router)
 
 @app.get("/")
 def read_root():

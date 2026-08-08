@@ -53,6 +53,11 @@ export default function AgentTracePanel() {
                     <CheckCircle2 size={13} />
                     <span>done</span>
                   </div>
+                ) : step.status === 'fallback_used' ? (
+                  <div className="flex items-center gap-1.5 text-amber-500 font-bold bg-amber-950/40 border border-amber-500/20 px-2 py-0.5 rounded text-[10px]">
+                    <AlertCircle size={11} />
+                    <span>fallback used</span>
+                  </div>
                 ) : (
                   <div className="flex items-center gap-1 text-rose-500">
                     <AlertCircle size={13} />
@@ -64,6 +69,12 @@ export default function AgentTracePanel() {
               <p className="text-[#F1F5F9] text-xs leading-relaxed pl-6">
                 {step.message}
               </p>
+
+              {step.status === 'fallback_used' && step.reasoning && (
+                <p className="text-amber-400/95 text-[10px] italic pl-6 font-semibold">
+                  ⚠️ Reason: {step.reasoning}
+                </p>
+              )}
 
               {step.duration && step.duration !== '0' && (
                 <span className="text-[10px] text-slate-500 pl-6">

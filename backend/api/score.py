@@ -18,11 +18,38 @@ def get_credit_passport(business_id: str, db: Session = Depends(get_db)):
 
     flags = db.query(ComplianceFlag).filter(ComplianceFlag.business_id == business_id).all()
     
+    # Check if any agent has used fallback
+    from db.models import AgentTraceLog
+    fallback_logs = db.query(AgentTraceLog).filter(
+        AgentTraceLog.business_id == business_id,
+        AgentTraceLog.status == "fallback_used"
+    ).all()
+    using_fallback = len(fallback_logs) > 0
+
+    # Compute average monthly revenue from transaction credits
+    from db.models import Transaction
+    from collections import defaultdict
+    txns = db.query(Transaction).filter(Transaction.business_id == business_id).all()
+    monthly_credits = defaultdict(float)
+    for t in txns:
+        if t.txn_type.lower() == "credit":
+            month_str = t.txn_date.strftime("%Y-%m")
+            monthly_credits[month_str] += t.amount
+    avg_monthly_revenue = sum(monthly_credits.values()) / len(monthly_credits) if monthly_credits else 0.0
+
     explanation_data = score.explanation_json or {}
 
     return {
         "business_id": business_id,
+        "business_name": business.name,
+        "gstin": business.gstin,
         "score": score.score,
+        "using_fallback": using_fallback,
+        "demo_mode": business.demo_mode,
+        "filing_rate": score.filing_rate,
+        "reconciliation_rate": score.reconciliation_rate,
+        "on_time_rate": score.on_time_rate,
+        "avg_monthly_revenue": avg_monthly_revenue,
         "computed_at": score.computed_at.isoformat() + "Z",
         "factor_breakdown": score.explanation_json.get("factor_breakdown", {}) if score.explanation_json else {
             "filing_compliance": score.filing_rate * 20.0,

@@ -7,6 +7,8 @@ from utils.pdf_utils import extract_text_from_pdf
 
 class ExtractionAgent:
     def __init__(self):
+        from dotenv import load_dotenv
+        load_dotenv()
         self.api_key = os.getenv("GOOGLE_API_KEY")
 
     def run(self, file_path: str, doc_type: str) -> dict:
@@ -28,38 +30,86 @@ class ExtractionAgent:
 
         # If Gemini API Key is missing or invalid, generate high-quality fallback responses matching seed data
         if not self.api_key or self.api_key == "your_gemini_api_key":
-            return self._fallback_extraction(doc_type, file_path)
+            reason = "GOOGLE_API_KEY unset" if not self.api_key else "GOOGLE_API_KEY is placeholder"
+            return {"data": self._fallback_extraction(doc_type, file_path, text_content=text_content), "fallback_used": True, "fallback_reason": reason}
 
-        # Call Gemini LLM using HTTP POST or langchain-google-genai
-        try:
-            # We call the Gemini API endpoint to retrieve JSON matching schemas
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
-            headers = {"Content-Type": "application/json"}
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": f"{prompt}\n\nDocument Text Content:\n{text_content}"}
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json"
+        model_name = "gemini-3.1-flash-lite"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": f"{prompt}\n\nDocument Text Content:\n{text_content}"}
+                    ]
                 }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json"
             }
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            if response.status_code == 200:
+        }
+
+        # We will attempt retries (up to 3 times) and log execution latency, latency per call, etc.
+        import time
+        max_retries = 3
+        retry_attempts = 0
+        start_time = time.time()
+        response = None
+        error_msg = ""
+        http_status = None
+        response_body = ""
+
+        for attempt in range(max_retries):
+            retry_attempts = attempt
+            try:
+                latency_start = time.time()
+                response = requests.post(url, headers=headers, json=payload, timeout=30)
+                latency_end = time.time()
+                http_status = response.status_code
+                response_body = response.text
+                
+                print(f"[LLM LOG] Agent: Extraction, Model: {model_name}, Attempt: {attempt + 1}, HTTP Status: {http_status}, Latency: {latency_end - latency_start:.2f}s")
+                
+                if http_status == 200:
+                    break
+                elif http_status == 429:
+                    error_msg = f"Gemini API returned 429: Quota exceeded"
+                elif http_status == 404:
+                    error_msg = f"Gemini API returned 404: Model not found ({model_name})"
+                elif http_status == 401 or http_status == 403:
+                    error_msg = f"Gemini API returned {http_status}: Authentication failure"
+                else:
+                    error_msg = f"Gemini API returned HTTP {http_status}: {response_body[:200]}"
+                
+                # Sleep briefly before retry
+                time.sleep(1)
+            except requests.exceptions.Timeout as t_err:
+                error_msg = f"Timeout error calling Gemini API: {t_err}"
+                print(f"[LLM LOG] Agent: Extraction, Attempt: {attempt + 1}, Timeout Error: {t_err}")
+                time.sleep(1)
+            except Exception as e:
+                error_msg = f"Request failed: {str(e)}"
+                print(f"[LLM LOG] Agent: Extraction, Attempt: {attempt + 1}, Error: {e}")
+                time.sleep(1)
+
+        total_latency = time.time() - start_time
+        print(f"[LLM LOG SUMMARY] Agent: Extraction, Model: {model_name}, Total Attempts: {retry_attempts + 1}, Final HTTP Status: {http_status}, Total Latency: {total_latency:.2f}s, Error Body: {response_body if http_status != 200 else 'None'}")
+
+        if response is not None and http_status == 200:
+            try:
                 result_json = response.json()
                 text_response = result_json["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(text_response)
-            else:
-                print(f"Gemini API returned status code {response.status_code}: {response.text}")
-                return self._fallback_extraction(doc_type, file_path)
-        except Exception as e:
-            print(f"Gemini extraction failed: {e}. Falling back to default mock extraction.")
-            return self._fallback_extraction(doc_type, file_path)
+                parsed_json = json.loads(text_response)
+                return {"data": parsed_json, "fallback_used": False, "fallback_reason": ""}
+            except Exception as parse_err:
+                reason = f"JSON parse failure on LLM output: {parse_err}"
+                print(f"[LLM ERROR] {reason}")
+                return {"data": self._fallback_extraction(doc_type, file_path, text_content=text_content), "fallback_used": True, "fallback_reason": reason}
+        else:
+            final_reason = error_msg or "Failed to call Gemini API after retries"
+            return {"data": self._fallback_extraction(doc_type, file_path, text_content=text_content), "fallback_used": True, "fallback_reason": final_reason}
 
-    def _fallback_extraction(self, doc_type: str, file_path: str) -> dict:
+    def _fallback_extraction(self, doc_type: str, file_path: str, text_content: str = "") -> dict:
         filename = os.path.basename(file_path).lower()
         
         # High quality mocks mirroring seed data if the filename indicates Ravi Kumar's files
@@ -115,4 +165,4 @@ class ExtractionAgent:
             
         else:
             # General default structure
-            return {"status": "unsupported", "raw_extracted_text": text_content[:500]}
+            return {"status": "unsupported", "raw_extracted_text": text_content[:500] if text_content else ""}

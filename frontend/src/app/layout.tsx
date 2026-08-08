@@ -42,7 +42,7 @@ export default function RootLayout({
               <span>&middot;</span>
               <span>₹30L Cr Credit Gap</span>
               <span>&middot;</span>
-              <span>Powered by Gemini AI</span>
+              <span>Automated Credit Scoring</span>
             </div>
           </div>
         </footer>
