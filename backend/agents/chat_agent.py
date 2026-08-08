@@ -7,7 +7,7 @@ from utils.prompt_templates import CHAT_SYSTEM_PROMPT
 class ChatAgent:
     def __init__(self):
         from dotenv import load_dotenv
-        load_dotenv(override=True)
+        load_dotenv()
         self.api_key = os.getenv("GOOGLE_API_KEY")
 
     def run(self, message: str, business_context: dict) -> dict:
